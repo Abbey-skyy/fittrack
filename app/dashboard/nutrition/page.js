@@ -119,6 +119,8 @@ export default function NutritionPage() {
     mutationFn: saveNutrition,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['nutrition'] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       setShowAdd(false);
       setFood(EMPTY_FOOD);
       setLookupQuery('');

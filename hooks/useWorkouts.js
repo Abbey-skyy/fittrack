@@ -51,6 +51,8 @@ export function useCreateWorkout() {
     mutationFn: createWorkout,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: [WORKOUTS_KEY] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
       refreshUser();
     },
   });
@@ -60,7 +62,11 @@ export function useUpdateWorkout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: updateWorkout,
-    onSuccess: () => qc.invalidateQueries({ queryKey: [WORKOUTS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [WORKOUTS_KEY] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    },
   });
 }
 
@@ -68,6 +74,10 @@ export function useDeleteWorkout() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: deleteWorkout,
-    onSuccess: () => qc.invalidateQueries({ queryKey: [WORKOUTS_KEY] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: [WORKOUTS_KEY] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
+      qc.invalidateQueries({ queryKey: ['dashboard-stats'] });
+    },
   });
 }

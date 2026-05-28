@@ -384,6 +384,7 @@ export default function SleepPage() {
     mutationFn: (payload) => axios.post('/api/sleep', payload).then((r) => r.data.data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['sleep'] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
       setShowModal(false);
     },
   });

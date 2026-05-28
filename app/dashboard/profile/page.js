@@ -383,6 +383,7 @@ function DashboardTab({ user }) {
 // Edit Profile tab (existing form, unchanged logic)
 // ═══════════════════════════════════════════════════════════════════════════
 function EditProfileTab({ user, updateUser }) {
+  const qc = useQueryClient();
   const [form, setForm] = useState({
     name: user?.name || '',
     profile: {
@@ -402,6 +403,8 @@ function EditProfileTab({ user, updateUser }) {
     },
     onSuccess: (updated) => {
       updateUser(updated);
+      qc.invalidateQueries({ queryKey: ['user'] });
+      qc.invalidateQueries({ queryKey: ['user-progress'] });
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
     },
