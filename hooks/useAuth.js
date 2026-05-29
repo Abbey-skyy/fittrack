@@ -26,12 +26,13 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password) => {
     const { data } = await axios.post('/api/auth/login', { email, password });
     const { token: newToken, user: newUser } = data.data;
-    queryClient.clear(); // wipe any stale cache from a previous session
-    setToken(newToken);
-    setUser(newUser);
+    // Set header BEFORE clearing cache — any immediate refetch will have the token
+    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     localStorage.setItem('fittrack_token', newToken);
     localStorage.setItem('fittrack_user', JSON.stringify(newUser));
-    axios.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    queryClient.clear();
+    setToken(newToken);
+    setUser(newUser);
     return newUser;
   }, [queryClient]);
 

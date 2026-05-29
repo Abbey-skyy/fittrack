@@ -96,7 +96,13 @@ function DashboardTab({ user }) {
 
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['user-progress'],
-    queryFn:  () => axios.get('/api/user/progress').then((r) => r.data.data),
+    queryFn: async () => {
+      const token = localStorage.getItem('fittrack_token');
+      const { data } = await axios.get('/api/user/progress', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      return data.data;
+    },
     staleTime: 0,
   });
 

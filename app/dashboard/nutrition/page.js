@@ -136,8 +136,6 @@ export default function NutritionPage() {
     try {
       const { data } = await axios.post('/api/nutrition/lookup', {
         foodName: lookupQuery,
-        servingSize: Number(food.servingSize) || 100,
-        quantity: Number(food.quantity) || 1,
       });
       const n = data.data;
       setFood((f) => ({
