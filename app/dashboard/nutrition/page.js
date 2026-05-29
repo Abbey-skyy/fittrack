@@ -413,7 +413,7 @@ export default function NutritionPage() {
                   </button>
                 </div>
                 {lookupError && <p className="text-xs text-red-400">{lookupError}</p>}
-                <p className="text-xs text-slate-600">Describe the food and Claude will estimate the macros for you.</p>
+                <p className="text-xs text-slate-600">Describe the food and FitAI will estimate the macros for you.</p>
               </div>
 
               {/* Food name */}
