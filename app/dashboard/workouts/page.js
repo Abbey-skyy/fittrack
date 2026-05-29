@@ -141,29 +141,38 @@ function LogWorkoutModal({ onClose }) {
     setLookupError('');
     setEstimatedTotal(null);
     try {
+      const token = localStorage.getItem('fittrack_token');
       const filtered = form.exercises.filter((ex) => ex.name.trim());
-      const { data } = await axios.post('/api/workouts/calories', {
-        title:      form.title,
-        type:       form.type,
-        duration:   Number(form.duration),
-        exercises:  filtered.map((ex) => ({ name: ex.name, category: ex.category })),
-        userWeight: user?.profile?.weight,
-      });
-      const result = data.data;
+      const { data } = await axios.post(
+        '/api/workouts/calories',
+        {
+          title:      form.title,
+          type:       form.type,
+          duration:   Number(form.duration),
+          exercises:  filtered.map((ex) => ({ name: ex.name, category: ex.category })),
+          userWeight: user?.profile?.weight,
+        },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      const result = data?.data;
+      if (!result) throw new Error('Empty response from server');
       // Auto-fill each exercise's kcal field
       setForm((f) => ({
         ...f,
         exercises: f.exercises.map((ex) => {
-          const match = result.exercises?.find(
-            (e) => e.name.toLowerCase().includes(ex.name.toLowerCase()) ||
-                   ex.name.toLowerCase().includes(e.name.toLowerCase())
+          if (!ex.name.trim()) return ex;
+          const match = (result.exercises || []).find(
+            (e) =>
+              e.name.toLowerCase().includes(ex.name.toLowerCase()) ||
+              ex.name.toLowerCase().includes(e.name.toLowerCase())
           );
           return match ? { ...ex, caloriesBurned: String(match.calories) } : ex;
         }),
       }));
       setEstimatedTotal(result.totalCalories);
     } catch (err) {
-      setLookupError(err.response?.data?.error || 'Could not estimate calories. Try again.');
+      const msg = err.response?.data?.error || err.message || 'Could not estimate calories. Try again.';
+      setLookupError(msg);
     } finally {
       setIsLookingUp(false);
     }
