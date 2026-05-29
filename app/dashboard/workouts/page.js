@@ -112,10 +112,16 @@ function WorkoutCard({ workout, onDelete }) {
 // ─── Log workout modal ────────────────────────────────────────────────────────
 function LogWorkoutModal({ onClose }) {
   const createWorkout = useCreateWorkout();
+  const { user } = useAuth();
+
   const [form, setForm] = useState({
     title: '', type: 'strength', duration: '', mood: '', notes: '',
     exercises: [{ name: '', category: 'strength', caloriesBurned: '' }],
   });
+
+  const [isLookingUp, setIsLookingUp]     = useState(false);
+  const [lookupError, setLookupError]     = useState('');
+  const [estimatedTotal, setEstimatedTotal] = useState(null);
 
   const setField = (field) => (e) => setForm((f) => ({ ...f, [field]: e.target.value }));
   const addExercise = () =>
@@ -128,6 +134,40 @@ function LogWorkoutModal({ onClose }) {
       exs[i] = { ...exs[i], [field]: e.target.value };
       return { ...f, exercises: exs };
     });
+
+  const handleCalorieLookup = async () => {
+    if (!form.duration) { setLookupError('Enter duration first.'); return; }
+    setIsLookingUp(true);
+    setLookupError('');
+    setEstimatedTotal(null);
+    try {
+      const filtered = form.exercises.filter((ex) => ex.name.trim());
+      const { data } = await axios.post('/api/workouts/calories', {
+        title:      form.title,
+        type:       form.type,
+        duration:   Number(form.duration),
+        exercises:  filtered.map((ex) => ({ name: ex.name, category: ex.category })),
+        userWeight: user?.profile?.weight,
+      });
+      const result = data.data;
+      // Auto-fill each exercise's kcal field
+      setForm((f) => ({
+        ...f,
+        exercises: f.exercises.map((ex) => {
+          const match = result.exercises?.find(
+            (e) => e.name.toLowerCase().includes(ex.name.toLowerCase()) ||
+                   ex.name.toLowerCase().includes(e.name.toLowerCase())
+          );
+          return match ? { ...ex, caloriesBurned: String(match.calories) } : ex;
+        }),
+      }));
+      setEstimatedTotal(result.totalCalories);
+    } catch (err) {
+      setLookupError(err.response?.data?.error || 'Could not estimate calories. Try again.');
+    } finally {
+      setIsLookingUp(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -208,6 +248,40 @@ function LogWorkoutModal({ onClose }) {
           </div>
 
           <textarea className={`${inp} resize-none`} rows={2} placeholder="Notes (optional)" value={form.notes} onChange={setField('notes')} />
+
+          {/* ── FitAI Calorie Estimator ── */}
+          <div className="rounded-xl bg-orange-500/5 border border-orange-500/20 p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="text-xs font-semibold text-orange-400 uppercase tracking-wide mb-0.5">✦ FitAI Calorie Estimator</p>
+                <p className="text-xs text-slate-500">Let FitAI check calories you burned today</p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCalorieLookup}
+                disabled={isLookingUp || !form.duration}
+                className="shrink-0 px-4 py-2 bg-orange-500 hover:bg-orange-400 disabled:opacity-40 disabled:cursor-not-allowed text-black font-bold rounded-lg text-xs transition-all"
+              >
+                {isLookingUp ? (
+                  <span className="flex items-center gap-1.5">
+                    <svg className="animate-spin w-3 h-3" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                    Calculating…
+                  </span>
+                ) : 'LOOK UP'}
+              </button>
+            </div>
+            {estimatedTotal !== null && (
+              <p className="text-xs text-orange-300 mt-3 pt-3 border-t border-orange-500/15">
+                ✓ Estimated <span className="font-bold">{estimatedTotal} kcal</span> burned — calories filled in above. You can adjust them manually.
+              </p>
+            )}
+            {lookupError && (
+              <p className="text-xs text-red-400 mt-2">{lookupError}</p>
+            )}
+          </div>
 
           {createWorkout.isError && (
             <p className="text-xs text-red-400">{createWorkout.error?.response?.data?.error || 'Failed to save'}</p>
