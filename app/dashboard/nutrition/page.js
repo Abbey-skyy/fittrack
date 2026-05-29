@@ -339,7 +339,7 @@ export default function NutritionPage() {
           <div className="rounded-xl border border-dashed border-white/10 p-6 text-center">
             <p className="text-slate-500 text-sm">
               Log your meals above, then click <span className="text-cyan-400 font-medium">Analyse Today</span> to get
-              personalised nutrition advice from Claude AI.
+              personalised nutrition advice from FitAI.
             </p>
           </div>
         )}
