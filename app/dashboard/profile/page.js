@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAuth } from '@/hooks/useAuth';
 import {
@@ -90,7 +90,11 @@ function EmptyChart({ message }) {
 // Dashboard tab
 // ═══════════════════════════════════════════════════════════════════════════
 function DashboardTab({ user }) {
-  const { data, isLoading } = useQuery({
+  // Guard recharts (uses ResizeObserver) from running during SSR
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ['user-progress'],
     queryFn:  () => axios.get('/api/user/progress').then((r) => r.data.data),
     staleTime: 0,
@@ -106,7 +110,32 @@ function DashboardTab({ user }) {
     );
   }
 
-  if (!data) return null;
+  if (isError || !data) {
+    return (
+      <div className="glass rounded-2xl p-12 text-center">
+        <span className="text-4xl block mb-4">📊</span>
+        <p className="text-slate-300 font-medium mb-1">Could not load dashboard</p>
+        <p className="text-slate-500 text-sm mb-5">Check your connection or try refreshing.</p>
+        <button
+          onClick={() => refetch()}
+          className="px-5 py-2 bg-cyan-500/15 text-cyan-400 rounded-xl text-sm hover:bg-cyan-500/25 transition-colors"
+        >
+          Try Again
+        </button>
+      </div>
+    );
+  }
+
+  // Don't render recharts (uses ResizeObserver) until the component is mounted on the client
+  if (!mounted) {
+    return (
+      <div className="space-y-4">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="glass rounded-2xl h-40 animate-pulse" />
+        ))}
+      </div>
+    );
+  }
 
   const { last7days, avgMacros, weekSummary, scores, currentState } = data;
   // Assign fill colours here (UI concern) so no Cell children needed
