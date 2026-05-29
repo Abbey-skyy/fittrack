@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { useWorkouts, useCreateWorkout, useDeleteWorkout } from '@/hooks/useWorkouts';
 import { useAuth } from '@/hooks/useAuth';
+import axios from 'axios';
 
 const WORKOUT_TYPES      = ['strength', 'cardio', 'hiit', 'yoga', 'mixed', 'other'];
 const EXERCISE_CATEGORIES = ['strength', 'cardio', 'flexibility', 'balance', 'sports'];
